@@ -1,50 +1,43 @@
 <?xml version="1.0"?>
 <!DOCTYPE project>
 
-<project name="jbelt-core-portlet" basedir="." xmlns:artifact="antlib:org.apache.maven.artifact.ant" default="copy-dependencies">
+<project name="appoggio-portlet" basedir="." default="deploy" xmlns:ivy="antlib:org.apache.ivy.ant">
 	<import file="../build-common-portlet.xml" />
 
+    <property name="ivy.version" value="2.3.0-rc2"/>
+    <property name="ivy.home" value="${user.home}/.ivy2"/>
 	<property name="app.lib.dir" value="docroot/WEB-INF/lib" />
-
-	<!-- manual install -->
-	<property name="jboss-el.version" value="2.0.0.GA" />
-	       
-	<property name="liferay-faces.version" value="3.1.1-ga2" />
-	<property name="jsf.version" value="2.1.3-b02" />
-	<property name="icefaces.version" value="3.2.0" />
-
-	<property name="spring.version" value="3.0.5.RELEASE" />
-	<property name="jstl.version" value="1.2" />
-	<property name="slf4j.version" value="1.5.5" />
-
+	<property name="app.lib.dir" value="docroot/WEB-INF/lib" />
 	
-	<!-- Include the Spring Dependencies -->
-	<artifact:dependencies filesetId="app.custom.deps" usescope="runtime">
+	<target name="test" description="Test ivy installation"> <ivy:settings />
+	</target>
 
-		<dependency groupId="org.icefaces" artifactId="icefaces" version="${icefaces.version}" scope="compile" />
-		<dependency groupId="org.icefaces" artifactId="icefaces-ace" version="${icefaces.version}" scope="compile" />
-		<dependency groupId="org.icefaces" artifactId="icefaces-compat" version="${icefaces.version}" scope="compile" />
-		<dependency groupId="org.icepush" artifactId="icepush" version="${icefaces.version}" scope="compile" />
-		<dependency groupId="com.sun.faces" artifactId="jsf-api" version="${jsf.version}" scope="compile" />
-		<dependency groupId="com.sun.faces" artifactId="jsf-impl" version="${jsf.version}" scope="compile" />
-		<dependency groupId="org.jboss.el" artifactId="jboss-el" version="${jboss-el.version}" scope="compile" />
-		<dependency groupId="com.liferay.faces" artifactId="liferay-faces-bridge-api" version="${liferay-faces.version}" scope="compile" />
-		<dependency groupId="com.liferay.faces" artifactId="liferay-faces-bridge-impl" version="${liferay-faces.version}" scope="compile" />
-		<dependency groupId="com.liferay.faces" artifactId="liferay-faces-alloy" version="${liferay-faces.version}" scope="compile" />
-		<dependency groupId="com.liferay.faces" artifactId="liferay-faces-util" version="${liferay-faces.version}" scope="compile" />
-		<dependency groupId="com.liferay.faces" artifactId="liferay-faces-portal" version="${liferay-faces.version}" scope="compile" />
-		<!-- -->
-		
-		<dependency groupId="org.slf4j" artifactId="slf4j-log4j12" version="${slf4j.version}" scope="provided" />
-		<dependency groupId="javax.servlet" artifactId="jstl" version="${jstl.version}" scope="compile" />
-		<dependency groupId="org.springframework" artifactId="spring-webmvc-portlet" version="${spring.version}" scope="compile" />
-		<dependency groupId="javax.validation" artifactId="validation-api" version="1.0.0.GA" scope="compile" />
-		<dependency groupId="org.hibernate" artifactId="hibernate-validator" version="4.0.2.GA" scope="compile" />
-		
-	</artifact:dependencies>
-
+    <!-- ================================= 
+          target: resolve              
+         ================================= -->
+    <target name="resolve" description="-> retrieve dependencies with ivy">
+        <ivy:retrieve />
+    </target>
+	
 	<!-- Just ensure that we copy all application sepecific libraries to the docroot/WEB-INF/lib folder so that its picked up by the Liferay build-->
-	<target name="copy-dependencies">
+	<target name="copy-dependencies" description="-> copy dependecies in WEB-INF/lib" depends="resolve">
+		<copy todir="${app.lib.dir}">
+			<fileset dir="lib" />
+			<!-- This mapper strips off all leading directory information -->
+			<mapper type="flatten" />
+		</copy>
+	</target>
+
+	<target name="install" description="-> install modules to localreporsitory">
+		<ivy:install organisation="commons-lang" module="commons-lang"
+		revision="2.6" transitive="true" overwrite="false" from="public" to="local"/>
+	</target>
+	
+    <target name="report" description="-> report of dependencies with ivy">
+    	<ivy:repreport  xml="true" graph="false" />
+    </target>
+
+	<target name="MVN-copy-dependencies" description="-> copy dependecies in WEB-INF/lib" depends="resolve">
 		<copy todir="${app.lib.dir}">
 			<fileset refid="app.custom.deps" />
 			<!-- This mapper strips off all leading directory information -->
@@ -53,7 +46,6 @@
 
 		<!-- Call the Liferay deploy target to deploy to the necessary ${auto.deploy.dir} - default build
 		<antcall target="deploy" /> -->
-	</target>
-	
+	</target>	
 
 </project>
